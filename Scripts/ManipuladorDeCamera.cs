@@ -12,13 +12,13 @@ public class ManipuladorDeCamera : MonoBehaviour
     private Transform pivot;
 
     [Header("Configurações de movimento")]
-    public float lerpSpeed = 5f;
-    public float turnSpeed = 1.5f;
-    public float turnSmoothing = 0.1f;
+    public float lerpSpeed = 10f;//10f;
+    public float turnSpeed = 3f;//3f;
+    public float turnSmoothing = 0.05f;//0.05f;
 
     [Header("Limites de rotação")]
     public float tiltMax = 75f;
-    public float tiltMin = -30f;   // negativo para olhar para baixo
+    public float tiltMin = -5f;//-5f; negativo para olhar para baixo 
     public float minCameraHeight = 0.5f;
 
     private float smoothX;
@@ -37,7 +37,7 @@ public class ManipuladorDeCamera : MonoBehaviour
             Debug.LogWarning("Jogador não atribuído na câmera! Arraste o Player no Inspector.");
         }
 
-        Cursor.lockState = CursorLockMode.Locked;
+       // Cursor.lockState = CursorLockMode.Locked;
     }
     
    
