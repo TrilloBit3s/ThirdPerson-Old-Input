@@ -1,208 +1,120 @@
-// Atualizado 13/11/2025
-using UnityEngine;
+﻿using UnityEngine;
 
-// Script responsável pelo controle de movimento do jogador (andar, correr, pular e interagir com trampolim)
 public class PlayerMoviment : MonoBehaviour
 {
-    // Componentes principais
+    //Componentes principais
     private CharacterController personagem;
     private Animator animator;
 
-    // Câmera que define a direção do movimento (usada para movimento relativo à câmera)
+    //Câmera que define a direção do moviemento
     public Camera seguirCamera;
 
     [Header("Movimentação")]
-    public float velocidadeNormal = 5f;       // Velocidade padrão ao andar
-    public float velocidadeCorrida = 8f;      // Velocidade ao correr (Shift)
-    public float velocidadeRotacao = 10f;     // Suavidade da rotação
-
-    [Header("Pulo & Gravidade")]
-    public float alturaPulo = 1.0f;           // Altura do pulo
-    public float gravidade = -9.81f;          // Valor da gravidade (negativo para baixo)
+    public float velocidadeNormal = 5f; //velocidade padrao de andar
+    public float velocidadeCorrida = 8f; //velocidade de corrida
+    public float velocidadeRotacao = 15f; //velocidade de rotação do personagem
 
     // Controle interno da física
-    private Vector3 velocidadeJogador;        // Armazena a velocidade vertical (e ajustes de queda)
-    private bool jogadorNoChao;               // Indica se o jogador está tocando o chão
+    private Vector3 velocidadeJogador; //armazena a velocidade atual do jogador
+    private bool jogadorNoChao; //verifica se o jogador está no chão
+
+    [Header("Pulo e Gravidade")]
+    public float alturadoPulo = 1.0f; //altura do pulo
+    private float gravidade = -9.81f; //força da gravidade
 
     void Start()
     {
-        // Obtém referências aos componentes obrigatórios
+        // obtem os componentes necessários
         personagem = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
-        // Caso o jogador esqueça de atribuir a câmera no Inspector,
-        // pega automaticamente a principal da cena
-        if (seguirCamera == null)
+        //caso o jogador não tenha uma câmera atribuída, atribui a câmera principal
+        if(seguirCamera == null)
+        {
             seguirCamera = Camera.main;
+        }
     }
 
     void Update()
     {
-        // Chama a função de movimento a cada frame
         Mover();
     }
 
     void Mover()
     {
-        // Verifica se o jogador está no chão
+        // verificar se o jogador está no chão
         jogadorNoChao = personagem.isGrounded;
 
-        // Se estiver no chão e ainda houver força vertical negativa,
-        // aplica um leve valor negativo para mantê-lo preso ao solo
-        if (jogadorNoChao && velocidadeJogador.y < 0)
+        // se estiver no chao e ainda houver força vertical negativa
+        if(jogadorNoChao && velocidadeJogador.y < 0)
         {
-            velocidadeJogador.y = -2f;
+            velocidadeJogador.y = -2f; //pequena força para manter o jogador no chão  
         }
 
-        // Captura entrada do jogador (teclas WASD ou setas)
+        // captura de entrada do jogador (teclas WASD ou setas)
         float hInput = Input.GetAxis("Horizontal");
         float vInput = Input.GetAxis("Vertical");
 
-        // Detecta se o jogador está pressionando Shift (correndo)
+        // Detectar se o jogador esta pressionando a tecla de corrida (Shift esquerdo)
         bool correndo = Input.GetKey(KeyCode.LeftShift);
 
-        // Define a velocidade atual conforme o estado (andando/correndo)
-        float velocidadeAtual = correndo ? velocidadeCorrida : velocidadeNormal;
+        // Define a veloccidade atual conforme o estado (andar ou correr)
+        float velocidadeAtual = correndo ? velocidadeCorrida : velocidadeNormal; 
 
-        // Calcula o movimento relativo à rotação da câmera
-        Vector3 moveInput = Quaternion.Euler(0, seguirCamera.transform.eulerAngles.y, 0) 
-                          * new Vector3(hInput, 0, vInput);
+        // Calcula a direção do movimento com base na câmera
+        Vector3 moveInput = Quaternion.Euler(0, seguirCamera.transform.eulerAngles.y, 0) * new Vector3(hInput, 0, vInput);
 
         // Normaliza a direção para evitar aumento de velocidade ao andar na diagonal
         Vector3 movementDirection = moveInput.normalized;
 
-        // Move o personagem no plano XZ
+        // Move o personagem no plano X e Z
         personagem.Move(movementDirection * velocidadeAtual * Time.deltaTime);
 
-        // Rotaciona suavemente o personagem na direção do movimento
-        if (movementDirection != Vector3.zero)
+        // Rotacionar suavemente o personagem na direção do movimento
+        if(movementDirection != Vector3.zero)
         {
             Quaternion desiredRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, velocidadeRotacao * Time.deltaTime);
         }
 
-        // ---- CONTROLE DE ANIMAÇÕES ----
-        animator.SetBool("Mover", movementDirection != Vector3.zero);
+        //---CONTROLE DE ANIMAÇÕES---
+        bool estaMovendo = movementDirection.magnitude > 0.1f;
+
+        //Ativa "Mover" quando ha movimento
+        animator.SetBool("Mover", estaMovendo);
+
+        //Informar se esta no chão
         animator.SetBool("EstaNoChao", jogadorNoChao);
-        animator.SetBool("Correndo", correndo && movementDirection != Vector3.zero);
 
-        // ---- PULO ----
-        // Só pode pular se estiver no chão
-        if (Input.GetButtonDown("Jump") && jogadorNoChao)
+        //Ativa correndo somente se estiver se movendo e segurando o shift
+        animator.SetBool("Correndo", estaMovendo && correndo);
+
+        //Pulo
+        //Só pula se o jogador estiver no chao
+        if(Input.GetButtonDown("Jump") && jogadorNoChao)
         {
-            // Calcula a força do pulo usando a fórmula da gravidade
-            velocidadeJogador.y = Mathf.Sqrt(alturaPulo * -2f * gravidade);
+            //calcula a força do pulo usando a gravidade
+            velocidadeJogador.y = Mathf.Sqrt(alturadoPulo * -2f * gravidade);
 
-            // Dispara a animação de salto
+            //Dispara animação de salto
             animator.SetTrigger("Saltar");
         }
 
-        // ---- GRAVIDADE ----
-        // Aplica a gravidade continuamente
+        //Gravidade
         velocidadeJogador.y += gravidade * Time.deltaTime;
 
-        // Move o jogador verticalmente
+        //mover o jogadror verticalmente
         personagem.Move(velocidadeJogador * Time.deltaTime);
     }
 
-    // --- Chamado pelo trampolim ---
-    // Esse método é invocado quando o jogador entra em contato com o trampolim
-    public void SetTrampolineForce(float force)
+    public void SetTrampolimForce(float force)
     {
-        // Calcula a força do impulso vertical, semelhante ao pulo, mas com valor recebido do trampolim
+        //aplica a força do trampolim na velocidade vertical do jogador, mas com valor recebido do trampolim
         velocidadeJogador.y = Mathf.Sqrt(force * -2f * gravidade);
+
+        if(animator != null)
+        {
+            animator.SetTrigger("Saltar");
+        }
     }
 }
-
-
-// Atualizado 21/09/2025
-// Animator precisa destes parâmetros: 
-// Bool → Mover
-// Bool → EstaNoChao
-// Bool → Correndo
-// Trigger → Saltar
-/*
-using UnityEngine;
-
-public class PlayerMoviment : MonoBehaviour
-{
-    private CharacterController personagem;
-    private Animator animator;
-
-    public Camera seguirCamera;
-
-    [Header("Movimentação")]
-    public float velocidadeNormal = 5f;
-    public float velocidadeCorrida = 8f;
-    public float velocidadeRotacao = 10f;
-
-    [Header("Pulo & Gravidade")]
-    public float alturaPulo = 1.0f;
-    public float gravidade = -9.81f;
-
-    private Vector3 velocidadeJogador;
-    private bool jogadorNoChao;
-
-    void Start()
-    {
-        personagem = GetComponent<CharacterController>();
-        animator = GetComponent<Animator>();
-
-        // Se não arrastar a câmera no Inspector, pega a principal
-        if (seguirCamera == null)
-            seguirCamera = Camera.main;
-    }
-
-    void Update()
-    {
-        Mover();
-    }
-
-    void Mover()
-    {
-        // Checa se está no chão
-        jogadorNoChao = personagem.isGrounded;
-        if (jogadorNoChao && velocidadeJogador.y < 0)
-        {
-            velocidadeJogador.y = -2f; // mantém no chão
-        }
-
-        // Entrada de movimento
-        float hInput = Input.GetAxis("Horizontal");
-        float vInput = Input.GetAxis("Vertical");
-
-        // Define velocidade (anda ou corre)
-        bool correndo = Input.GetKey(KeyCode.LeftShift);
-        float velocidadeAtual = correndo ? velocidadeCorrida : velocidadeNormal;
-
-        // Movimento relativo à câmera
-        Vector3 moveInput = Quaternion.Euler(0, seguirCamera.transform.eulerAngles.y, 0) * new Vector3(hInput, 0, vInput);
-        Vector3 movementDirection = moveInput.normalized;
-
-        // Move personagem
-        personagem.Move(movementDirection * velocidadeAtual * Time.deltaTime);
-
-        // Rotação suave
-        if (movementDirection != Vector3.zero)
-        {
-            Quaternion desiredRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, velocidadeRotacao * Time.deltaTime);
-        }
-
-        // ---- ANIMAÇÕES ----
-        animator.SetBool("Mover", movementDirection != Vector3.zero);
-        animator.SetBool("EstaNoChao", jogadorNoChao);
-        animator.SetBool("Correndo", correndo && movementDirection != Vector3.zero);
-
-        // Pulo
-        if (Input.GetButtonDown("Jump") && jogadorNoChao)
-        {
-            velocidadeJogador.y = Mathf.Sqrt(alturaPulo * -2f * gravidade);
-            animator.SetTrigger("Saltar");
-        }
-
-        // Gravidade
-        velocidadeJogador.y += gravidade * Time.deltaTime;
-        personagem.Move(velocidadeJogador * Time.deltaTime);
-    }
-}*/

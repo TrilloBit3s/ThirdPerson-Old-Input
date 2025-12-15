@@ -1,43 +1,39 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-// Este script aplica dano ou cura ao jogador quando ele permanece dentro de uma área de colisão (trigger).
 public class ManipularVida : MonoBehaviour
 {
-    // Referência ao script VidaJogador, que controla a vida do jogador
+    //Referencia de vida  a ser alterada
     VidaJogador vidaJogador;
-	
-    // Quantidade de vida a ser alterada (valor positivo = cura, valor negativo = dano)
+
+    //Quantidade de vida a ser alterada
     public int quantidade;
 
-    // Intervalo de tempo (em segundos) entre cada aplicação de dano/recuperação
+    //Intervalo de tempo entre cada aplicação de dano
     public float damageTime;
 
-    // Cronômetro que conta o tempo desde a última aplicação de dano/recuperação
+    //Cronometro que conta o tempo desde a ultima aplicação de dano
     float currentDamageTime;
-	
-    // Chamado uma vez no início
+
     void Start()
     {
-        // Procura o GameObject com a tag "Player" e obtém o componente VidaJogador
-        vidaJogador = GameObject.FindWithTag("Player").GetComponent<VidaJogador>();
+        vidaJogador = GameObject.FindGameObjectWithTag("Player").GetComponent<VidaJogador>();
     }
-	
-    // Chamado a cada frame enquanto outro collider permanece dentro deste trigger
-    private void OnTriggerStay(Collider other)
+
+    private void OnTriggerStay(Collider coll)
     {
-        // Verifica se o objeto dentro do trigger é o jogador
-        if (other.tag == "Player")
+        //verifica se o objeto dentro do trigger é o jogador
+        if(coll.tag == "Player")
         {
-            // Incrementa o tempo acumulado dentro da área
+            //Incrementa o tempo acumulado dentro da area
             currentDamageTime += Time.deltaTime;
 
-            // Quando o tempo acumulado ultrapassa o intervalo definido...
-            if (currentDamageTime > damageTime)
+            //Quando o tempo ultrapassa o tempo definido
+            if(currentDamageTime > damageTime)
             {
-                // Altera a vida do jogador (pode ser dano ou cura)
+                //Altera a vida do jogador( pode ser dano ou cura)
                 vidaJogador.AlterarVida(quantidade);
 
-                // Reinicia o cronômetro para o próximo intervalo
+                //Reinicia o cronometro para o proximo intervalo    
                 currentDamageTime = 0.0f;
             }
         }
